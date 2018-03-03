@@ -1,0 +1,17 @@
+[Unit]
+Description=Atlassian Jira
+After=network.target
+Wants=network.target
+
+[Service]
+Type=forking
+User=jira
+EnvironmentFile=-@JIRA_SYSTEMD_ENVFILE@
+PIDFile=@JIRA_RUN@/catalina.pid
+ExecStart=@JIRA_INSTALL@/bin/start-jira.sh
+ExecStop=@JIRA_INSTALL@/bin/stop-jira.sh
+LimitNOFILE=8192
+LimitNPROC=8192
+
+[Install]
+WantedBy=multi-user.target

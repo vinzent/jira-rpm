@@ -1,0 +1,31 @@
+#!/bin/sh
+
+set -e
+set -u
+set -o pipefail
+
+SRCRPMDIR=${1:-$(pwd)/SRPMS}
+
+cleanup() {
+  exitcode=$?
+
+  if [ "$exitcode" != "0" ]; then
+    echo "ERROR: unsuccessful exitcode: $exitcode" >&2
+  fi
+
+  exit $exitcode
+}
+
+trap cleanup EXIT
+
+( 
+  cd SOURCES;
+  spectool -g ../jira-software.spec
+) 
+
+rpmbuild \
+  -bs \
+  --undefine dist \
+  --define "_sourcedir $(pwd)/SOURCES" \
+  --define "_srcrpmdir ${SRCRPMDIR}" \
+  jira-software.spec
