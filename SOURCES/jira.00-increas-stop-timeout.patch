@@ -1,0 +1,37 @@
+Wait max 900 seconds before killing Jira and make it overridable
+
+20 seconds weren't enough even for a small instance.
+
+Can be overridden with the JIRA_STOP_KILL_TIMEOUT env var.
+
+The default systemd timeout is 90 seconds. So if 90 seconds is not
+enough also the systemd TimeoutStopUSec needs adjustment.
+
+--- a/bin/stop-jira.sh	2018-03-03 15:34:13.256082760 +0100
++++ b/bin/stop-jira.sh	2018-02-20 11:54:30.000000000 +0100
+@@ -1,5 +1,7 @@
+ #!/bin/bash
+ 
++JIRA_STOP_KILL_TIMEOUT=${JIRA_STOP_KILL_TIMEOUT:-900}
++
+ # resolve links - $0 may be a softlink - stolen from catalina.sh
+ PRG="$0"
+ while [ -h "$PRG" ]; do
+@@ -18,7 +20,7 @@
+ if [ -z "$JIRA_USER" ] || [ $(id -un) == "$JIRA_USER" ]; then
+     echo executing as current user
+ 
+-    exec $PRGDIR/shutdown.sh 20 -force $@
++    exec $PRGDIR/shutdown.sh $JIRA_STOP_KILL_TIMEOUT -force $@
+ 
+ elif [ $UID -ne 0 ]; then
+ 
+@@ -33,6 +35,6 @@
+     else
+         sucmd="su"
+     fi
+-    $sucmd -m $JIRA_USER -c "$PRGDIR/shutdown.sh 20 -force $@"
++    $sucmd -m $JIRA_USER -c "$PRGDIR/shutdown.sh $JIRA_STOP_KILL_TIMEOUT -force $@"
+ 
+ fi
+
