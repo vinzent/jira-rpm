@@ -11,25 +11,23 @@
 
 %global jira_systemd_envfile %{_sysconfdir}/sysconfig/%{name}
 
-Name:           jira-software
-Version:        7.8.0
+Name:           jira
+Version:        6.4.13
 Release:        1%{?dist}
 Summary:        Atlassian Jira with systemd integration
 
 License:        Proprietary       
 URL:            https://www.atlassian.com/software/jira
 Source0:        https://www.atlassian.com/software/jira/downloads/binary/atlassian-%{name}-%{version}.tar.gz
-Source1:        jira-software.service
-Source2:        jira-software.sysconfig
-Source3:        jira-software.tmpfilesd.conf
-Patch0:         jira-software.00-increase-stop-timeout.patch
-Patch1:         jira-software.01-loosen-java-check.patch
+Source1:        %{name}.service
+Source2:        %{name}.sysconfig
+Source3:        %{name}.tmpfilesd.conf
+Patch0:         %{name}.00-increase-stop-timeout.patch
 
 BuildRequires:  systemd
 BuildRequires:  dos2unix
 
 Requires:       %{name}-plain = %{version}
-Requires:       java-1.8.0-headless
 %{?systemd_requires}
 
 %description
@@ -47,7 +45,6 @@ tar -xf %{SOURCE0}
 cd atlassian-%{name}-%{version}-standalone
 
 %patch0 -p1
-%patch1 -p1
 
 # remove windows blobs
 find ./ -name "*.bat" -delete

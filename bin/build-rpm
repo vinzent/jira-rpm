@@ -20,11 +20,11 @@ trap cleanup EXIT
 
 ( 
   cd SOURCES;
-  spectool -g ../jira-software.spec
+  spectool -g ../jira.spec
 ) 
 
 rpmbuild \
   -bb \
   --define "_sourcedir $(pwd)/SOURCES" \
   --define "_rpmdir ${RPMDIR}" \
-  jira-software.spec
+  jira.spec
