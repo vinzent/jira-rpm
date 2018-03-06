@@ -2,6 +2,7 @@
 %define __jar_repack %{nil}
 %global __provides_exclude ^osgi.*$
 %global __requires_exclude ^osgi.*$
+%global selinux_variants mls targeted
 
 %global jira_install /opt/atlassian/jira
 %global jira_conf %{_sysconfdir}%{jira_install}
@@ -13,7 +14,7 @@
 
 Name:           jira-software
 Version:        7.8.0
-Release:        1%{?dist}
+Release:        1.1.0%{?dist}
 Summary:        Atlassian Jira with systemd integration
 
 License:        Proprietary       
@@ -22,14 +23,17 @@ Source0:        https://www.atlassian.com/software/jira/downloads/binary/atlassi
 Source1:        jira-software.service
 Source2:        jira-software.sysconfig
 Source3:        jira-software.tmpfilesd.conf
+Source4:        jira.te
+Source5:        jira.fc
 Patch0:         jira-software.00-increase-stop-timeout.patch
 Patch1:         jira-software.01-loosen-java-check.patch
 
 BuildRequires:  systemd
 BuildRequires:  dos2unix
+BuildRequires:  checkpolicy, selinux-policy-devel
 
 Requires:       %{name}-plain = %{version}
-Requires:       java-1.8.0-headless
+Requires:       %{name}-selinux = %{version}
 %{?systemd_requires}
 
 %description
@@ -42,6 +46,24 @@ Requires:       shadow-utils
 %description plain
 Atlassian Jira without systemd integration
 
+%package openjdk
+Summary:        Atlassian Jira with OpenJDK dependency
+Requires:       java-1.8.0-headless
+Requires:       %{name} = %{version}
+
+%description openjdk
+Atlassian Jira with OpenJDK dependency (unsupported by Atlassian)
+
+%package selinux
+Summary:        Atlassian Jira SELinux policy
+%if "%{_selinux_policy_version}" != ""
+Requires:       selinux-policy >= %{_selinux_policy_version}
+%endif
+Requires: /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles
+
+%description selinux
+Atlassian Jira SELinux policy
+
 %prep
 tar -xf %{SOURCE0}
 cd atlassian-%{name}-%{version}-standalone
@@ -52,10 +74,20 @@ cd atlassian-%{name}-%{version}-standalone
 # remove windows blobs
 find ./ -name "*.bat" -delete
 find ./ -name "*.exe" -delete
+find ./ -name "*.exe.x64" -delete
 rm -rf ./bin/apr/
 
 # unix line endings FTW!
 dos2unix conf/*
+
+# JIRA application home directory
+# https://confluence.atlassian.com/adminjiraserver073/jira-application-home-directory-861253888.html
+sed -i 's|^jira\.home =.*|jira.home = %{jira_home}|' atlassian-jira/WEB-INF/classes/jira-application.properties
+
+# Logging and profiling
+# https://confluence.atlassian.com/adminjiraserver071/logging-and-profiling-802592962.html
+sed -i 's|^log4j\.appender\.filelog=.*|log4j.appender.filelog=org.apache.log4j.RollingFileAppender|' atlassian-jira/WEB-INF/classes/log4j.properties
+sed -i 's|^log4j\.appender\.filelog\.File=.*|log4j.appender.filelog.File=%{jira_log}/atlassian-jira.log|' atlassian-jira/WEB-INF/classes/log4j.properties
 
 install -d -m 755 integration
 install -m 644 %{SOURCE1} integration/
@@ -67,18 +99,21 @@ sed -i 's|@JIRA_INSTALL@|%{jira_install}|g' integration/*
 sed -i 's|@JIRA_SYSTEMD_ENVFILE@|%{jira_systemd_envfile}|g' integration/*
 sed -i 's|@JIRA_RUN@|%{jira_run}|g' integration/*
 
-# JIRA application home directory
-# https://confluence.atlassian.com/adminjiraserver073/jira-application-home-directory-861253888.html
-sed -i 's|^jira\.home =.*|jira.home = %{jira_home}|' atlassian-jira/WEB-INF/classes/jira-application.properties
-
-# Logging and profiling
-# https://confluence.atlassian.com/adminjiraserver071/logging-and-profiling-802592962.html
-sed -i 's|^log4j\.appender\.filelog=.*|log4j.appender.filelog=org.apache.log4j.RollingFileAppender|' atlassian-jira/WEB-INF/classes/log4j.properties
-sed -i 's|^log4j\.appender\.filelog\.File=.*|log4j.appender.filelog.File=%{jira_log}/atlassian-jira.log|' atlassian-jira/WEB-INF/classes/log4j.properties
+install -d -m 755 SELinux
+install -m 644 %{SOURCE4} %{SOURCE5} SELinux/
 
 
 %build
 cd atlassian-%{name}-%{version}-standalone
+
+cd SELinux
+for selinuxvariant in %{selinux_variants}
+do
+  make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile
+  mv jira.pp jira.pp.${selinuxvariant}
+  make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile clean
+done
+cd -
 
 %install
 rm -rf $RPM_BUILD_ROOT
@@ -103,6 +138,13 @@ ln --force --symbolic --relative $RPM_BUILD_ROOT%{_tmppath} $RPM_BUILD_ROOT%{jir
 cp -a atlassian-jira lib bin external-source \
   tomcat-docs webapps $RPM_BUILD_ROOT%{jira_install}
 
+for selinuxvariant in %{selinux_variants}
+do
+  install -d %{buildroot}%{_datadir}/selinux/${selinuxvariant}
+  install -p -m 644 SELinux/jira.pp.${selinuxvariant} \
+    %{buildroot}%{_datadir}/selinux/${selinuxvariant}/jira.pp
+done
+
 %pre plain
 getent group jira >/dev/null || groupadd -r jira
 getent passwd jira >/dev/null || \
@@ -112,11 +154,31 @@ getent passwd jira >/dev/null || \
 %post
 %systemd_post %{name}.service
 
+%post selinux
+for selinuxvariant in %{selinux_variants}
+do
+  /usr/sbin/semodule -s ${selinuxvariant} -i \
+    %{_datadir}/selinux/${selinuxvariant}/jira.pp &> /dev/null || :
+done
+/sbin/fixfiles -R %{name},%{name}-plain restore || :
+/sbin/restorecon -Ri %{jira_home} %{jira_conf} %{jira_log} %{jira_install} %{jira_run} || :
+
+
 %preun
 %systemd_preun %{name}.service
 
 %postun
 %systemd_postun_with_restart %{name}service
+
+%postun selinux
+if [ $1 -eq 0 ] ; then
+  for selinuxvariant in %{selinux_variants}
+  do
+    /usr/sbin/semodule -s ${selinuxvariant} -r jira &> /dev/null || :
+  done
+  /sbin/fixfiles -R %{name},%{name}-plain restore || :
+  /sbin/restorecon -Ri %{jira_home} %{jira_conf} %{jira_log} %{jira_install} %{jira_run} || :
+fi
 
 %files
 %config(noreplace) %attr(640, root, root) %{jira_systemd_envfile}
@@ -145,6 +207,13 @@ getent passwd jira >/dev/null || \
 %dir %attr(750, jira, adm) %{jira_log}
 %dir %attr(750, jira, jira) %{jira_home}
 %dir %attr(750, jira, jira) %{jira_run}
+
+%files openjdk
+
+%files selinux
+%defattr(-,root,root,0755)
+%doc atlassian-%{name}-%{version}-standalone/SELinux/*
+%{_datadir}/selinux/*/jira.pp
 
 
 %changelog

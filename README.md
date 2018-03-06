@@ -1,10 +1,12 @@
 # Atlassian Jira package for CentOS, RHEL & Fedora
 
-The spec file creates 2 packages:
+The spec file creates these packages:
 
 * jira-software-plain: the application
-* jira-software: depends on jira-software-plain and adds systemd service integration
-
+* jira-software: depends adds systemd service and SELinux integration
+* jira-software-openjdk: as jira-software but depend on opendjk (only Oracle Java
+  is supported by Atlassian)
+* jira-software-selinux: selinux policy for jira
 
 ## What is where?
 
@@ -20,6 +22,9 @@ The spec file creates 2 packages:
 
 ```
 sudo yum install jira-software
+
+# Add custom env (JAVA_HOME, JAVA_OPTS, JIRA_HOME, ...)
+vi /etc/sysconfig/jira-software
 
 sudo systemctl start jira-software
 
