@@ -7,10 +7,18 @@ require {
 
 ## <desc>
 ## <p>
-## Allow a container to run as jira_t
+## Allow a container process to run as jira_t
 ## </p>
 ## </desc>
 gen_tunable(jira_run_in_container, false)
+
+## <desc>
+## <p>
+## By default only DB and HTTP connections are allowed. Set to true
+## to allow tcp connections to anywhere.
+## </p>
+## </desc>
+gen_tunable(jira_can_network_connect, false)
 
 # The template will generate these types:
 # * jira_log_t
@@ -41,9 +49,16 @@ mysql_stream_connect(jira_t)
 mysql_rw_db_sockets(jira_t)
 mysql_tcp_connect(jira_t)
 
+corenet_tcp_connect_oracle_port(jira_t)
+corenet_sendrecv_oracle_client_packets(jira_t)
+
 
 tunable_policy(`jira_run_in_container',`
   virt_exec_sandbox_files(jira_t)
   virt_manage_sandbox_files(jira_t)
   domtrans_pattern(container_runtime_t, jira_exec_t, jira_t)
+')
+
+tunable_policy(`jira_can_network_connect',`
+	corenet_tcp_connect_all_ports(httpd_t)
 ')
