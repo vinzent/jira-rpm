@@ -84,11 +84,6 @@ dos2unix conf/*
 # https://confluence.atlassian.com/adminjiraserver073/jira-application-home-directory-861253888.html
 sed -i 's|^jira\.home =.*|jira.home = %{jira_home}|' atlassian-jira/WEB-INF/classes/jira-application.properties
 
-# Logging and profiling
-# https://confluence.atlassian.com/adminjiraserver071/logging-and-profiling-802592962.html
-sed -i 's|^log4j\.appender\.filelog=.*|log4j.appender.filelog=org.apache.log4j.RollingFileAppender|' atlassian-jira/WEB-INF/classes/log4j.properties
-sed -i 's|^log4j\.appender\.filelog\.File=.*|log4j.appender.filelog.File=%{jira_log}/atlassian-jira.log|' atlassian-jira/WEB-INF/classes/log4j.properties
-
 install -d -m 755 integration
 install -m 644 %{SOURCE1} integration/
 install -m 644 %{SOURCE2} integration/
