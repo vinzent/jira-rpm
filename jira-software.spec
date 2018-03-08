@@ -14,7 +14,7 @@
 
 Name:           jira-software
 Version:        7.8.0
-Release:        1.3.0%{?dist}
+Release:        1.4.0%{?dist}
 Summary:        Atlassian Jira with systemd integration
 
 License:        Proprietary       
