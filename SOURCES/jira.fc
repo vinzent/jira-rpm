@@ -2,4 +2,5 @@
 /opt/atlassian/jira/bin/stop-jira.sh                 -- gen_context(system_u:object_r:jira_exec_t,s0)
 /run/atlassian/jira(/.*)?                               gen_context(system_u:object_r:jira_var_run_t,s0)
 /var/log/atlassian/jira(/.*)?                           gen_context(system_u:object_r:jira_log_t,s0)
+/var/atlassian/application-data/jira/log(/.*)?          gen_context(system_u:object_r:jira_log_t,s0)
 /var/atlassian/application-data/jira(/.*)?              gen_context(system_u:object_r:jira_var_lib_t,s0)

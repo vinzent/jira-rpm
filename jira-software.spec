@@ -14,7 +14,7 @@
 
 Name:           jira-software
 Version:        7.8.0
-Release:        1.2.0%{?dist}
+Release:        1.3.0%{?dist}
 Summary:        Atlassian Jira with systemd integration
 
 License:        Proprietary       
@@ -194,6 +194,13 @@ fi
 %config(noreplace) %{jira_install}/work
 
 %{jira_install}/atlassian-jira
+# some of them are config files.
+# https://confluence.atlassian.com/adminjiraserver/important-directories-and-files-938847744.html
+%config(noreplace) %{jira_install}/atlassian-jira/WEB-INF/classes/jira-application.properties
+%config(noreplace) %{jira_install}/atlassian-jira/WEB-INF/classes/log4j.properties
+%config(noreplace) %{jira_install}/atlassian-jira/WEB-INF/classes/entityengine.xml
+%config(noreplace) %{jira_install}/atlassian-jira/WEB-INF/classes/seraph-config.xml
+
 %{jira_install}/lib
 %attr(755,root,root) %{jira_install}/bin
 %{jira_install}/external-source

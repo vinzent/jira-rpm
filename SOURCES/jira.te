@@ -30,6 +30,9 @@ gen_tunable(jira_can_network_connect, false)
 # * jira_tmp_t
 tomcat_domain_template(jira)
 
+mmap_read_files_pattern(jira_t, jira_var_lib_t, jira_var_lib_t)
+mmap_read_files_pattern(jira_t, jira_tmp_t, jira_tmp_t)
+
 allow jira_t self:process execmem;
 allow jira_t self:tcp_socket { listen accept };
 
@@ -52,6 +55,9 @@ mysql_tcp_connect(jira_t)
 corenet_tcp_connect_oracle_port(jira_t)
 corenet_sendrecv_oracle_client_packets(jira_t)
 
+manage_dirs_pattern(init_t, jira_tmp_t, jira_tmp_t)
+
+sssd_read_public_files(jira_t)
 
 tunable_policy(`jira_run_in_container',`
   virt_exec_sandbox_files(jira_t)
@@ -60,5 +66,5 @@ tunable_policy(`jira_run_in_container',`
 ')
 
 tunable_policy(`jira_can_network_connect',`
-	corenet_tcp_connect_all_ports(httpd_t)
+	corenet_tcp_connect_all_ports(jira_t)
 ')
