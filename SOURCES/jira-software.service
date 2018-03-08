@@ -4,14 +4,15 @@ After=network.target
 Wants=network.target
 
 [Service]
-Type=forking
+Type=simple
 User=jira
 EnvironmentFile=-@JIRA_SYSTEMD_ENVFILE@
-PIDFile=@JIRA_RUN@/catalina.pid
-ExecStart=@JIRA_INSTALL@/bin/start-jira.sh
-ExecStop=@JIRA_INSTALL@/bin/stop-jira.sh
+ExecStart=@JIRA_INSTALL@/bin/start-jira.sh -fg
+SuccessExitStatus=143
 LimitNOFILE=8192
 LimitNPROC=8192
+PrivateTmp=yes
+UMask=0027
 
 [Install]
 WantedBy=multi-user.target
