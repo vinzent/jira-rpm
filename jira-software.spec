@@ -13,8 +13,8 @@
 %global jira_systemd_envfile %{_sysconfdir}/sysconfig/%{name}
 
 Name:           jira-software
-Version:        7.8.0
-Release:        1.4.0%{?dist}
+Version:        7.8.1
+Release:        1.4.1%{?dist}
 Summary:        Atlassian Jira with systemd integration
 
 License:        Proprietary       
@@ -115,6 +115,7 @@ rm -rf $RPM_BUILD_ROOT
 cd atlassian-%{name}-%{version}-standalone
 
 install -d -m 750 $RPM_BUILD_ROOT%{jira_conf}
+install -d -m 750 $RPM_BUILD_ROOT%{jira_conf}/Catalina/localhost
 install -d -m 750 $RPM_BUILD_ROOT%{jira_home}
 install -d -m 750 $RPM_BUILD_ROOT%{jira_log}
 install -d -m 755 $RPM_BUILD_ROOT%{jira_install}
