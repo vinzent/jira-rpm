@@ -13,8 +13,8 @@
 %global jira_systemd_envfile %{_sysconfdir}/sysconfig/%{name}
 
 Name:           jira-software
-Version:        7.8.1
-Release:        1.4.1%{?dist}
+Version:        7.8.0
+Release:        1.5.0%{?dist}
 Summary:        Atlassian Jira with systemd integration
 
 License:        Proprietary       

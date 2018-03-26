@@ -1,4 +1,4 @@
-policy_module(jira, 0.1.0)
+policy_module(jira, 0.5.0)
 
 require {
   type container_runtime_t;
@@ -30,11 +30,11 @@ gen_tunable(jira_can_network_connect, false)
 # * jira_tmp_t
 tomcat_domain_template(jira)
 
-mmap_read_files_pattern(jira_t, jira_var_lib_t, jira_var_lib_t)
-mmap_read_files_pattern(jira_t, jira_tmp_t, jira_tmp_t)
 
 allow jira_t self:process execmem;
 allow jira_t self:tcp_socket { listen accept };
+
+#filetrans_pattern(jira_t, jira_var_lib_t, jira_var_lib_t, file)
 
 auth_read_passwd(jira_t)
 dev_write_rand(jira_t)
@@ -58,6 +58,19 @@ corenet_sendrecv_oracle_client_packets(jira_t)
 manage_dirs_pattern(init_t, jira_tmp_t, jira_tmp_t)
 
 sssd_read_public_files(jira_t)
+
+
+optional_policy(`
+  # mmap_read_files_pattern() interface and
+  # the mmap_read_file_perms set are not available on EL7
+  gen_require(`
+    type jira_t, jira_var_lib_t, jira_tmp_t;
+  ')
+  allow jira_t jira_var_lib_t:dir search_dir_perms;
+  allow jira_t jira_var_lib_t:file { getattr open map read ioctl };
+  allow jira_t jira_tmp_t:dir search_dir_perms;
+  allow jira_t jira_tmp_t:file { getattr open map read ioctl };
+')
 
 tunable_policy(`jira_run_in_container',`
   virt_exec_sandbox_files(jira_t)
