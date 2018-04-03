@@ -12,7 +12,7 @@
 %global jira_systemd_envfile %{_sysconfdir}/sysconfig/%{name}
 
 Name:           jira
-Version:        6.4.13
+Version:        6.4.14
 Release:        2%{?dist}
 Summary:        Atlassian Jira with systemd integration
 
